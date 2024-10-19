@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Website</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.7/axios.min.js"></script>
+    <style>  body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f4f7f9;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+
+    h1 {
+        font-size: 2rem;
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    input[type="text"], input[type="password"] {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    button {
+        background-color: #3498db;
+        color: white;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.3s ease;
+        margin-top: 10px;
+        display: block;
+        width: 100%;
+    }
+
+    button:hover {
+        background-color: #2980b9;
+    }
+
+    /* Container Styles */
+    .auth-container, .todo-container {
+        background-color: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        max-width: 400px;
+        width: 100%;
+        margin: 20px auto;
+        text-align: center;
+    }
+
+    /* Todo List Styles */
+    .todo-container {
+        background-color: #fff;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        padding: 25px;
+        border-radius: 10px;
+        max-width: 500px;
+        width: 100%;
+    }
+
+    .todo-container h1 {
+        margin-bottom: 15px;
+        color: #2c3e50;
+    }
+
+    .todo-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: #fafafa;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 10px 0;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .todo-item.completed h4 {
+        text-decoration: line-through;
+        color: #95a5a6;
+    }
+
+    .todo-item h4 {
+        margin: 0;
+        font-size: 1rem;
+        flex-grow: 1;
+    }
+
+    .todo-item input[type="checkbox"] {
+        margin-right: 15px;
+    }
+
+    .todo-item button {
+        background-color: #e74c3c;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        width: auto;
+        border-radius: 5px;
+    }
+
+    .todo-item button:hover {
+        background-color: #c0392b;
+    }
+
+    .input-container {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+    }
+
+    .input-container input[type="text"] {
+        width: 75%;
+        margin-right: 10px;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+    }
+
+    .input-container button {
+        width: 22%;
+    }
+</style>
+</head>
+<body>
+    <!-- Signup Section -->
+    <div id="signup-section" class="auth-container" style="display: block;">
+        <h1>Create Account</h1>
+        <input id="signup-username" type="text" placeholder="Enter Username">
+        <input id="signup-password" type="password" placeholder="Enter Password">
+        <button onclick="signup()">Sign Up</button>
+    </div>
+
+    <!-- Signin Section (Hidden Initially) -->
+    <div id="signin-section" class="auth-container" style="display: none;">
+        <h1>Sign In</h1>
+        <input id="signin-username" type="text" placeholder="Enter Username">
+        <input id="signin-password" type="password" placeholder="Enter Password">
+        <button onclick="signin()">Sign In</button>
+    </div>
+
+    <!-- Todo Section (Hidden Initially) -->
+    <div id="todo-section" class="todo-container" style="display: none;">
+        <h1>Your Todo List</h1>
+        <div id="parent">
+            <div class="todo-item" id="todo-10">
+                <input type="checkbox" onchange="toggleComplete(this, 10)">
+                <h4>First Todo</h4>
+                <button onclick="deletetodo(10)">Delete</button>
+            </div>
+            <div class="todo-item" id="todo-20">
+                <input type="checkbox" onchange="toggleComplete(this, 20)">
+                <h4>Second Todo</h4>
+                <button onclick="deletetodo(20)">Delete</button>
+            </div>
+        </div>
+        <div class="input-container">
+            <input type="text" id="new-todo-input" placeholder="New Todo">
+            <button onclick="addtodo()">Add</button>
+        </div>
+        <button style="margin-top: 20px;" onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        // Initially check if the user is already signed in
+        if (localStorage.getItem("token")) {
+            showTodoSection();
+        } else {
+            showSignupSection();
+        }
+
+        async function signup() {
+            const username = document.getElementById("signup-username").value;
+            const password = document.getElementById("signup-password").value;
+
+            await axios.post("http://localhost:3000/signup", {
+                username: username,
+                password: password
+            });
+
+            alert("You are signed up");
+            showSigninSection();  // Move to the signin section
+        }
+
+        async function signin() {
+            const username = document.getElementById("signin-username").value;
+            const password = document.getElementById("signin-password").value;
+
+            const response = await axios.post("http://localhost:3000/signin", {
+                username: username,
+                password: password
+            });
+
+            if (response.data.token) {
+                localStorage.setItem("token", response.data.token);
+                alert("You are signed in");
+                showTodoSection();  // Move to the todo section
+                getTodos();
+            } else {
+                alert("Signin failed");
+            }
+        }
+
+        async function getTodos() {
+            const response = await axios.get("http://localhost:3000/todos", {
+                headers: {
+                    token: localStorage.getItem("token")
+                }
+            });
+            // Render todos from response (not shown in this example)
+        }
+
+        function deletetodo(index) {
+            let el = document.querySelector("#todo-" + index);
+            el.parentNode.removeChild(el);
+        }
+
+        let id = 30;
+        function addtodo() {
+            const inputEl = document.getElementById("new-todo-input");
+            const value = inputEl.value;
+
+            if (value.trim()) {
+                const newTodo = document.createElement("div");
+                newTodo.setAttribute("class","todo-item","id", "todo-" + id);
+                newTodo.innerHTML = `
+                    <h4>${value}</h4>
+                    <button onclick="deletetodo(${id})">delete</button>
+                `;
+                document.querySelector("#parent").appendChild(newTodo);
+                id++;
+                inputEl.value = "";  // Clear the input after adding
+            } else {
+                alert("Todo cannot be empty");
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("token");
+            alert("You are logged out");
+            showSignupSection();  // Return to signup section
+        }
+
+        // Helper functions to show/hide sections
+        function showSignupSection() {
+            document.getElementById("signup-section").style.display = "block";
+            document.getElementById("signin-section").style.display = "none";
+            document.getElementById("todo-section").style.display = "none";
+        }
+
+        function showSigninSection() {
+            document.getElementById("signup-section").style.display = "none";
+            document.getElementById("signin-section").style.display = "block";
+            document.getElementById("todo-section").style.display = "none";
+        }
+
+        function showTodoSection() {
+            document.getElementById("signup-section").style.display = "none";
+            document.getElementById("signin-section").style.display = "none";
+            document.getElementById("todo-section").style.display = "block";
+        }
+    </script>
+</body>
+</html>
